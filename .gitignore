@@ -6,3 +6,4 @@ data/**.jpg
 .DS_Store
 __pycache__/
 *.ipynb
+.mypy_cache/

@@ -1,3 +1,4 @@
+"""This module is responsible for image loading."""
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -5,22 +6,23 @@ from typing import Tuple, List, Dict
 
 from PIL import Image
 
-from img_data_gen.constants import INPUT_IMG_FOLDER, BACKGROUND_IMG_FOLDER
-
 
 @dataclass
 class ImageContainer:
+    """Stores input and background image data."""
     input_image_map: Dict[str, 'Image']
     bg_image_list: List['Image']
 
 
 @dataclass
 class ImageLoader:
-    input_img_folder: Path = INPUT_IMG_FOLDER
-    background_image_folder: Path = BACKGROUND_IMG_FOLDER
+    """This class is responsible for loading images."""
+    input_img_folder: Path
+    bg_img_folder: Path
     input_img_size: Tuple[int, int] = (int(800 * 0.7140232700551132), 800)
 
     def load_all(self) -> ImageContainer:
+        """Load all input and background images and stores the in some `ImageContainer` object."""
         input_image_fps: List[Path] = list(self.input_img_folder.glob('*.jpg'))
 
         with ThreadPoolExecutor() as executor:
@@ -30,7 +32,7 @@ class ImageLoader:
             ]
             bg_futures = [
                 executor.submit(self._load_bg_image, filepath)
-                for filepath in self.background_image_folder.glob('*.jpg')
+                for filepath in self.bg_img_folder.glob('*.jpg')
             ]
 
         return ImageContainer(

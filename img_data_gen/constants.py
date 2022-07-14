@@ -1,3 +1,4 @@
+"""Contains certain constants."""
 from pathlib import Path
 
 ROOT_FOLDER = Path(__file__).parents[1]

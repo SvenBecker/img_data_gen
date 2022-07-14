@@ -1,3 +1,4 @@
+"""This module is responsible for image transformation."""
 from typing import TYPE_CHECKING
 import random
 
