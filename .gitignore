@@ -1,6 +1,8 @@
 .venv
 output/*.png
+data/**.jpg
 .ipynb_checkpoints
 .idea
 .DS_Store
 __pycache__/
+*.ipynb
