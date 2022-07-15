@@ -47,4 +47,5 @@ class ImageLoader:
         return Image.open(filepath).convert('RGBA').resize(self.input_img_size)
 
     def _load_bg_image(self, filepath: Path) -> 'Image':
+        # todo[high]: probably also resize the background image and select one with a lower resolution
         return Image.open(filepath).convert('RGBA')
