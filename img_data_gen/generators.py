@@ -1,16 +1,15 @@
 """This module is actually responsible for generating randomized images."""
 import datetime as dt
-import os
 import functools
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, cast
+from typing import TYPE_CHECKING, Dict
 import random
 
 import numpy as np
 from tqdm import tqdm
 
+from img_data_gen.constants import DEFAULT_NUM_WORKERS
 from img_data_gen.loaders import ImageContainer, ImageLoader
 from img_data_gen.transformers import rnd_transform
 
@@ -36,7 +35,7 @@ class ImageGenerator:
     def run(self, samples: int) -> None:
         """Generate images based on selected amount of `samples`."""
         with tqdm(total=samples) as pbar:
-            with ThreadPoolExecutor(min(samples, cast(int, os.cpu_count()) + 4)) as executor:
+            with ThreadPoolExecutor(min(samples, DEFAULT_NUM_WORKERS)) as executor:
                 # run image creation concurrently
                 futures = [executor.submit(self.create_rnd_image) for _ in range(samples)]
                 for _ in as_completed(futures):
@@ -53,7 +52,7 @@ class ImageGenerator:
         bg_img: 'Image' = random.choice(self.image_container.bg_image_list)
 
         # create a new image as copy of the background image
-        new_img = deepcopy(bg_img)
+        new_img = bg_img.copy()
 
         # paste input images into the new_img and randomly apply input image transformations
         for _img in img_perm_map.values():
