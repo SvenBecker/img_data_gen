@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Tuple, List, Dict
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
+from platformdirs import _set_platform_dir_class
 
 
 @dataclass
@@ -61,23 +62,23 @@ class BoundingBox:
     @classmethod
     def from_img(cls, img: 'Image', anchor: Tuple[int, int] = (0, 0)) -> 'BoundingBox':
         """Returns a bounding box object based on provided image."""
-        # todo: isn't it `... + img_size[1]` because otherwise I'll receive negative values?
+    
         vertices: List[Tuple[int, int]] = [
             anchor,
-            (anchor[0], anchor[1] - img.size[1]),
-            (anchor[0] + img.size[0], anchor[1] - img.size[1]),
+            (anchor[0], anchor[1] + img.size[1]),
+            (anchor[0] + img.size[0], anchor[1] + img.size[1]),
             (anchor[0] + img.size[0], anchor[1])
         ]
-        center = (anchor[0] + img.size[0] / 2, anchor[1] - img.size[1] / 2)
+        center = (anchor[0] + img.size[0] / 2, anchor[1] + img.size[1] / 2)
         return cls(vertices=vertices, center=center)
 
     def move(self, x: int = 0, y: int = 0) -> 'BoundingBox':
         """
-        Moves bounding box by specified amount. Positive directions: right/up and returns a new BoundingBox object.
+        Moves bounding box by specified amount. Positive directions: right/down. Returns a new BoundingBox object.
         """
         vertices = [
             (vertex[0] + x, vertex[1] + y)
-            for i, vertex in enumerate(self.vertices)
+            for vertex in self.vertices
         ]
         center = (self.center[0] + x, self.center[1] + y)
         return BoundingBox(vertices=vertices, center=center)
@@ -89,7 +90,7 @@ class BoundingBox:
         """
 
         # rotational matrix
-        c, s = np.cos(np.radians(angle)), np.sin(np.radians(angle))
+        c, s = np.cos(np.radians(-angle)), np.sin(np.radians(-angle))
         matrix = np.array([[c, -s], [s, c]])
 
         # transform coordinates to move rotation center to origin
@@ -104,6 +105,20 @@ class BoundingBox:
         # reverse transform and reformat
         # rounding causes inaccuracies after multiple sequential rotations
         vertices_rotated = (vertices_rotated + np.array(self.center)).round(decimals=0).astype(int)
-        vertices = [tuple(line) for line in vertices_rotated]
+        new_vertices = [tuple(line) for line in vertices_rotated]
 
-        return BoundingBox(vertices=vertices, center=self.center)
+        # correction for anchor point shift occuring in PIL Image rotation
+        anchor_xshift = min([v[0] for v in self.vertices]) - min([v[0] for v in new_vertices])
+        anchor_yshift = min([v[1] for v in self.vertices]) - min([v[1] for v in new_vertices])
+        
+        return BoundingBox(vertices=new_vertices, center=self.center).move(anchor_xshift, anchor_yshift)
+    
+    def draw(self, background_img: 'Image') -> 'Image':
+        """Draws the BoundingBox onto a background image"""
+
+        drawer = ImageDraw.Draw(background_img)
+        drawer.line(self.vertices, fill='blue', width=4)
+        center_circle = [self.center[0] - 5, self.center[1] - 5, self.center[0] + 5, self.center[1] + 5]
+        drawer.ellipse(center_circle, fill='lightgreen', width=5)
+        return background_img
+
