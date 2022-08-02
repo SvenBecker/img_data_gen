@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from img_data_gen.constants import DEFAULT_NUM_WORKERS
 from img_data_gen.loaders import ImageContainer, ImageLoader
-from img_data_gen.transformers import rnd_transform
+from img_data_gen.transformers import ImageTransformer
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -32,17 +32,17 @@ class ImageGenerator:
         """Load input and background images and cache result."""
         return self.image_loader.load_all()
 
-    def run(self, samples: int) -> None:
+    def run(self, samples: int, draw_boxes: bool) -> None:
         """Generate images based on selected amount of `samples`."""
         with tqdm(total=samples) as pbar:
             with ThreadPoolExecutor(min(samples, DEFAULT_NUM_WORKERS)) as executor:
                 # run image creation concurrently
-                futures = [executor.submit(self.create_rnd_image) for _ in range(samples)]
+                futures = [executor.submit(self.create_rnd_image, draw_boxes=draw_boxes) for _ in range(samples)]
                 for _ in as_completed(futures):
                     # update the progressbar as soon as one of the images has been finished
                     pbar.update(1)
 
-    def create_rnd_image(self) -> None:
+    def create_rnd_image(self, draw_boxes: bool) -> None:
         """Create some randomized image file and save it."""
 
         # get a permutation of unique input images
@@ -56,10 +56,16 @@ class ImageGenerator:
 
         # paste input images into the new_img and randomly apply input image transformations
         for _img in img_perm_map.values():
-            img: 'Image' = rnd_transform(_img)   # todo: maybe change this
+
+            transformer = ImageTransformer(_img)
+            img, bbox = transformer.rnd_transform()
             anchor1: int = random.randint(0, bg_img.size[0] - img.size[0])
             anchor2: int = random.randint(0, bg_img.size[1] - img.size[1])
+            bbox = bbox.move(x=anchor1, y=anchor2)
+
             new_img.paste(img, box=(anchor1, anchor2), mask=img)
+            if draw_boxes:
+                bbox.draw(new_img)
 
         # save image as png
         filename = '-'.join(img_perm_map.keys())

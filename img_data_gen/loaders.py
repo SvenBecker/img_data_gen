@@ -6,14 +6,12 @@ from typing import Tuple, List, Dict
 
 import numpy as np
 from PIL import Image, ImageDraw
-from platformdirs import _set_platform_dir_class
 
 
 @dataclass
 class ImageContainer:
     """Stores input and background image data."""
     input_image_map: Dict[str, 'Image']
-    bounding_box_map: Dict[str, 'BoundingBox']
     bg_image_list: List['Image']
 
 
@@ -41,10 +39,6 @@ class ImageLoader:
         return ImageContainer(
             input_image_map={
                 fp.stem: input_future.result()
-                for fp, input_future in zip(input_image_fps, input_futures)
-            },
-            bounding_box_map={
-                fp.stem: self._create_bounding_box(input_future.result())
                 for fp, input_future in zip(input_image_fps, input_futures)
             },
             bg_image_list=[bg_future.result() for bg_future in bg_futures]

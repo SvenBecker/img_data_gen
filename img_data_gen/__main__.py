@@ -21,10 +21,13 @@ parser.add_argument(
 parser.add_argument(
     "-o", "--output-folder", type=Path, default=OUTPUT_FOLDER, help="Path to the output image folder."
 )
+parser.add_argument(
+    "--draw-boxes", action='store_true', help="Draw bounding boxes on the image."
+)
 args = parser.parse_args()
 
 ImageGenerator(
     input_img_folder=args.input_folder,
     bg_img_folder=args.bg_folder,
     output_folder=args.output_folder
-).run(samples=args.samples)
+).run(samples=args.samples, draw_boxes=args.draw_boxes)
