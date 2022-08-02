@@ -13,6 +13,7 @@ from platformdirs import _set_platform_dir_class
 class ImageContainer:
     """Stores input and background image data."""
     input_image_map: Dict[str, 'Image']
+    bounding_box_map: Dict[str, 'BoundingBox']
     bg_image_list: List['Image']
 
 
@@ -42,11 +43,18 @@ class ImageLoader:
                 fp.stem: input_future.result()
                 for fp, input_future in zip(input_image_fps, input_futures)
             },
+            bounding_box_map={
+                fp.stem: self._create_bounding_box(input_future.result())
+                for fp, input_future in zip(input_image_fps, input_futures)
+            },
             bg_image_list=[bg_future.result() for bg_future in bg_futures]
         )
 
     def _load_input_image(self, filepath: Path) -> 'Image':
         return Image.open(filepath).convert('RGBA').resize(self.input_img_size)
+
+    def _create_bounding_box(self, input_image: 'Image') -> 'BoundingBox':
+        return BoundingBox.from_img(input_image)
 
     def _load_bg_image(self, filepath: Path) -> 'Image':
         # todo[high]: probably also resize the background image and select one with a lower resolution
@@ -55,7 +63,7 @@ class ImageLoader:
 
 @dataclass
 class BoundingBox:
-    """Represents a card bounding box. Takes a non-rotated input image as parameter"""
+    """Represents a card bounding box"""
     vertices: List[Tuple[int, int]]
     center: Tuple[int, int]
 
