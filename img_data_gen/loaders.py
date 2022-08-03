@@ -107,12 +107,12 @@ class BoundingBox:
         # reverse transform and reformat
         # rounding causes inaccuracies after multiple sequential rotations
         vertices_rotated = (vertices_rotated + np.array(self.center)).round(decimals=0).astype(int)
-        new_vertices = [tuple(line) for line in vertices_rotated]
+        new_vertices = [(int(line[0]), int(line[1])) for line in vertices_rotated]
 
         # correction for anchor point shift occuring in PIL Image rotation
         anchor_xshift = min([v[0] for v in self.vertices]) - min([v[0] for v in new_vertices])
         anchor_yshift = min([v[1] for v in self.vertices]) - min([v[1] for v in new_vertices])
-        
+
         return BoundingBox(vertices=new_vertices, center=self.center).move(anchor_xshift, anchor_yshift)
     
     def draw(self, background_img: 'Image') -> 'Image':

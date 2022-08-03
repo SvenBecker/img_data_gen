@@ -1,5 +1,7 @@
 .venv
+ignore
 output/*.png
+output/*.json
 data/**.jpg
 .ipynb_checkpoints
 .idea
